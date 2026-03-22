@@ -4,7 +4,7 @@
  */
 
 
-function normalizeVolume(value: number): number {
+export function normalizeVolume(value: number): number {
   if (!Number.isFinite(value)) return 0.3;
   return Math.min(1, Math.max(0, value));
 }
