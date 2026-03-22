@@ -1,0 +1,58 @@
+# DeepTank command governance rules.
+# Most restrictive decision wins: forbidden > prompt > allow.
+
+# Safe project commands can run without prompts.
+prefix_rule(
+    pattern = ["npm", "run"],
+    decision = "allow",
+    justification = "Project scripts are the canonical execution path.",
+)
+
+prefix_rule(
+    pattern = ["npm", "exec"],
+    decision = "allow",
+    justification = "Allow npm exec for project-local tooling.",
+)
+
+prefix_rule(
+    pattern = ["node"],
+    decision = "allow",
+    justification = "Node scripts are used for deterministic perf and utility checks.",
+)
+
+prefix_rule(
+    pattern = ["cargo", "test"],
+    decision = "allow",
+    justification = "Rust unit tests are part of the required verify gate.",
+)
+
+# Potentially destructive commands require prompt or are blocked.
+prefix_rule(
+    pattern = ["git", "push"],
+    decision = "prompt",
+    justification = "Push operations require explicit review.",
+)
+
+prefix_rule(
+    pattern = ["git", "push", "origin", "main"],
+    decision = "forbidden",
+    justification = "Never push directly to main.",
+)
+
+prefix_rule(
+    pattern = ["git", "reset", "--hard"],
+    decision = "forbidden",
+    justification = "Hard resets can destroy local work.",
+)
+
+prefix_rule(
+    pattern = ["rm", "-rf", "/"],
+    decision = "forbidden",
+    justification = "Catastrophic filesystem deletion is always blocked.",
+)
+
+prefix_rule(
+    pattern = ["sudo"],
+    decision = "forbidden",
+    justification = "Do not elevate privileges from agent sessions.",
+)

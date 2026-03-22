@@ -1,0 +1,19 @@
+# Project-scoped Codex defaults for DeepTank.
+# This file is loaded only when the repository is trusted.
+
+approval_policy = "on-request"
+sandbox_mode = "workspace-write"
+web_search = "cached"
+project_doc_max_bytes = 65536
+project_doc_fallback_filenames = ["TEAM_GUIDE.md", ".agents.md"]
+
+[features]
+collaboration_modes = true
+request_rule = true
+multi_agent = false
+shell_snapshot = false
+search_tool = false
+
+[agents]
+max_threads = 6
+max_depth = 1

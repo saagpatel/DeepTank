@@ -1,0 +1,11 @@
+# codex-os-managed
+npm run git:guard:verify
+npm run codex:rules:check
+npm run lint
+npm run typecheck
+npm run test
+npm run test:rust
+npm run perf:bundle
+npm run perf:build
+npm run perf:assets
+npm run perf:summary
