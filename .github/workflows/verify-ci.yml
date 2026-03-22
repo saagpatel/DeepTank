@@ -1,0 +1,33 @@
+name: verify-ci
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, edited]
+    branches: [main, master]
+  push:
+    branches: [main, master]
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 20
+          cache: npm
+      - name: Setup Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+      - name: Install dependencies
+        run: npm ci
+      - name: Run deterministic verify contract
+        run: npm run verify
+      - name: Upload perf artifacts
+        if: always()
+        uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808
+        with:
+          name: perf-results
+          path: .perf-results
+          if-no-files-found: ignore
