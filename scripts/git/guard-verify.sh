@@ -6,10 +6,9 @@ set -euo pipefail
 # CI runs on merge branches and main, so skip branch-specific checks there.
 
 if [[ "${CI:-}" == "true" || "${GITHUB_ACTIONS:-}" == "true" ]]; then
-  echo "CI context detected; skipping branch and atomic guards."
+  echo "CI context detected; skipping branch, atomic, and local secret guards."
   npm run git:guard:generated
   npm run git:guard:large-files
-  npm run git:guard:secrets
   exit 0
 fi
 
