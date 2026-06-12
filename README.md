@@ -49,15 +49,15 @@ npm run dev:lean
 
 ## Tech Stack
 
-| Layer | Technology |
-|-------|------------|
-| Desktop shell | Tauri 2 |
-| Frontend | React 19, TypeScript, Vite |
-| Simulation | Rust — physics, genetics, species logic |
-| Visualization | React canvas rendering |
-| Local AI | Ollama (optional narration) |
-| Storage | SQLite |
-| Testing | Vitest |
+| Layer         | Technology                              |
+| ------------- | --------------------------------------- |
+| Desktop shell | Tauri 2                                 |
+| Frontend      | React 19, TypeScript, Vite              |
+| Simulation    | Rust — physics, genetics, species logic |
+| Visualization | React canvas rendering                  |
+| Local AI      | Ollama (optional narration)             |
+| Storage       | SQLite                                  |
+| Testing       | Vitest                                  |
 
 ## Architecture
 
