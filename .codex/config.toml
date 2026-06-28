@@ -1,9 +1,8 @@
 # Project-scoped Codex defaults for DeepTank.
 # This file is loaded only when the repository is trusted.
+# Runtime model, approval, sandbox, and web search settings inherit from
+# ~/.codex/config.toml or an explicit --profile layer.
 
-approval_policy = "on-request"
-sandbox_mode = "workspace-write"
-web_search = "cached"
 project_doc_max_bytes = 65536
 project_doc_fallback_filenames = ["TEAM_GUIDE.md", ".agents.md"]
 
