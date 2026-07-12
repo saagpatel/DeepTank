@@ -629,3 +629,98 @@ fn extract_f32(json: Option<&str>, key: &str) -> Option<f32> {
     let v: serde_json::Value = serde_json::from_str(s).ok()?;
     v.get(key)?.as_f64().map(|f| f as f32)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use rand::{rngs::StdRng, SeedableRng};
+
+    fn fixture_state() -> (Vec<Fish>, HashMap<u32, FishGenome>, Vec<Species>, Vec<Egg>) {
+        let mut rng = StdRng::seed_from_u64(42);
+        let mut genome = FishGenome::random(&mut rng);
+        genome.id = 101;
+        genome.generation = 3;
+        genome.pattern = PatternGene::Striped { angle: 27.5 };
+        genome.disease_resistance = 0.77;
+
+        let mut fish = Fish::new(genome.id, 120.0, 240.0, &mut rng);
+        fish.id = 202;
+        fish.age = 88;
+        fish.hunger = 0.41;
+        fish.behavior = BehaviorState::Foraging;
+        fish.custom_name = Some("Ada".to_string());
+        fish.is_favorite = true;
+
+        let species = Species {
+            id: 303,
+            name: Some("Testus roundtripus".to_string()),
+            description: Some("Persistence fixture".to_string()),
+            discovered_at_tick: 12,
+            extinct_at_tick: None,
+            centroid_hue: genome.base_hue,
+            centroid_speed: genome.speed,
+            centroid_size: genome.body_length,
+            centroid_pattern: "Striped".to_string(),
+            member_count: 1,
+            member_genome_ids: vec![genome.id],
+        };
+        let egg = Egg {
+            id: 404,
+            genome_id: genome.id,
+            x: 15.0,
+            y: 25.0,
+            age: 9,
+            parent_a_genome: genome.id,
+            parent_b_genome: genome.id,
+        };
+
+        (vec![fish], HashMap::from([(genome.id, genome)]), vec![species], vec![egg])
+    }
+
+    #[test]
+    fn saved_state_round_trips_core_simulation_data() {
+        let conn = Connection::open_in_memory().unwrap();
+        init_schema(&conn).unwrap();
+        let (fish, genomes, species, eggs) = fixture_state();
+
+        save_state(&conn, 777, 0.83, &fish, &genomes, &species, &eggs).unwrap();
+        let (tick, water_quality, loaded_fish, loaded_genomes, loaded_species, loaded_eggs, max_species_id) =
+            load_state(&conn).unwrap().expect("saved state should exist");
+
+        assert_eq!(tick, 777);
+        assert!((water_quality - 0.83).abs() < f32::EPSILON);
+        assert_eq!(loaded_fish.len(), 1);
+        assert_eq!(loaded_fish[0].id, 202);
+        assert_eq!(loaded_fish[0].behavior, BehaviorState::Foraging);
+        assert_eq!(loaded_fish[0].custom_name.as_deref(), Some("Ada"));
+        assert!(loaded_fish[0].is_favorite);
+        assert_eq!(loaded_genomes.len(), 1);
+        assert_eq!(loaded_genomes[&101].generation, 3);
+        assert!((loaded_genomes[&101].disease_resistance - 0.77).abs() < f32::EPSILON);
+        assert!(matches!(loaded_genomes[&101].pattern, PatternGene::Striped { angle } if (angle - 27.5).abs() < f32::EPSILON));
+        assert_eq!(loaded_species[0].name.as_deref(), Some("Testus roundtripus"));
+        assert_eq!(loaded_species[0].member_genome_ids, vec![101]);
+        assert_eq!(loaded_eggs[0].id, 404);
+        assert_eq!(max_species_id, 303);
+    }
+
+    #[test]
+    fn replay_snapshots_are_stored_in_tick_order() {
+        let conn = Connection::open_in_memory().unwrap();
+        init_schema(&conn).unwrap();
+        let (fish, genomes, _, _) = fixture_state();
+
+        save_snapshot(&conn, 600, 1, 1, 0.8, &genomes, &fish, 1, 0, 0.5).unwrap();
+        save_snapshot(&conn, 300, 1, 1, 0.9, &genomes, &fish, 0, 0, 0.6).unwrap();
+        save_snapshot(&conn, 900, 1, 1, 0.7, &genomes, &fish, 0, 1, 0.4).unwrap();
+
+        let ticks: Vec<u64> = conn
+            .prepare("SELECT tick FROM population_snapshots ORDER BY tick ASC")
+            .unwrap()
+            .query_map([], |row| row.get::<_, u64>(0))
+            .unwrap()
+            .map(Result::unwrap)
+            .collect();
+        assert_eq!(ticks, vec![300, 600, 900]);
+    }
+}
