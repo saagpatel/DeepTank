@@ -188,3 +188,44 @@ pub fn fallback_species_name(hue: f32, speed: f32, pattern: &str, size: f32) -> 
         format!("{} {} {}", color, pattern_word, behavior)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::time::Duration;
+
+    const UNREACHABLE_OLLAMA: &str = "http://127.0.0.1:1";
+
+    #[tokio::test]
+    async fn unavailable_ollama_fails_fast_without_panicking() {
+        let result = tokio::time::timeout(
+            Duration::from_secs(2),
+            name_species(UNREACHABLE_OLLAMA, "missing", 210.0, 1.0, 1.0, "Striped", 4, 2),
+        )
+        .await
+        .expect("connection failure must remain bounded");
+        assert!(result.is_none());
+
+        let narration = tokio::time::timeout(
+            Duration::from_secs(2),
+            generate_narration(UNREACHABLE_OLLAMA, "missing", 4, 1, 0.9, "none"),
+        )
+        .await
+        .expect("narration failure must remain bounded");
+        assert!(narration.is_none());
+
+        let journal = tokio::time::timeout(
+            Duration::from_secs(2),
+            generate_journal_entry(UNREACHABLE_OLLAMA, "missing", 1800, 4, 0.9, "one species"),
+        )
+        .await
+        .expect("journal failure must remain bounded");
+        assert!(journal.is_none());
+    }
+
+    #[test]
+    fn fallback_name_is_deterministic_when_ollama_is_unavailable() {
+        assert_eq!(fallback_species_name(210.0, 1.6, "Striped", 1.0), "Blue Striped Darters");
+        assert_eq!(fallback_species_name(210.0, 1.6, "Striped", 1.0), "Blue Striped Darters");
+    }
+}
