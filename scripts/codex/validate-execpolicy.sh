@@ -33,9 +33,9 @@ check_decision() {
   echo "[execpolicy] $* -> $decision"
 }
 
-check_decision "allow" npm run build
-check_decision "allow" node scripts/perf/summarize.mjs
-check_decision "allow" cargo test --manifest-path src-tauri/Cargo.toml
+check_decision "prompt" npm run build
+check_decision "prompt" node scripts/perf/summarize.mjs
+check_decision "prompt" cargo test --manifest-path src-tauri/Cargo.toml
 check_decision "prompt" git push origin feature/verify-check
 check_decision "forbidden" git push origin main
 check_decision "forbidden" git reset --hard HEAD
