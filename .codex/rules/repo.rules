@@ -1,29 +1,30 @@
 # DeepTank command governance rules.
 # Most restrictive decision wins: forbidden > prompt > allow.
 
-# Safe project commands can run without prompts.
+# Project commands may execute arbitrary repo code, so they remain sandboxed or
+# require an explicit prompt when outside the sandbox.
 prefix_rule(
     pattern = ["npm", "run"],
-    decision = "allow",
-    justification = "Project scripts are the canonical execution path.",
+    decision = "prompt",
+    justification = "Project scripts are canonical but may execute arbitrary repo code.",
 )
 
 prefix_rule(
     pattern = ["npm", "exec"],
-    decision = "allow",
-    justification = "Allow npm exec for project-local tooling.",
+    decision = "prompt",
+    justification = "npm exec may download or execute project-local tooling.",
 )
 
 prefix_rule(
     pattern = ["node"],
-    decision = "allow",
-    justification = "Node scripts are used for deterministic perf and utility checks.",
+    decision = "prompt",
+    justification = "Node scripts remain inside the sandbox unless explicitly approved.",
 )
 
 prefix_rule(
     pattern = ["cargo", "test"],
-    decision = "allow",
-    justification = "Rust unit tests are part of the required verify gate.",
+    decision = "prompt",
+    justification = "Rust tests execute repo code and should not escape the sandbox silently.",
 )
 
 # Potentially destructive commands require prompt or are blocked.
